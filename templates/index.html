@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🌱 AgroBot Universal - Agricultural Assistant</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <header class="header">
+            <div class="header-content">
+                <h1 id="main-title">🚜 AgroBot Universal</h1>
+                <p id="main-subtitle">AI-Based Agricultural Assistant</p>
+            </div>
+            <div class="language-selector">
+                <select id="language-select" class="language-dropdown">
+                    <option value="en">English</option>
+                    <option value="hi">हिन्दी (Hindi)</option>
+                    <option value="ta">தமிழ் (Tamil)</option>
+                    <option value="te">తెలుగు (Telugu)</option>
+                    <option value="ml">മലയാളം (Malayalam)</option>
+                </select>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <div class="main-content">
+            <!-- Left Panel - Disease Detection -->
+            <div class="left-panel">
+                <div class="panel-header">
+                    <h2 id="detection-title">🔍 Plant Disease Detection</h2>
+                </div>
+                
+                <!-- Upload Section -->
+                <div class="upload-section">
+                    <div class="upload-area" id="upload-area">
+                        <input type="file" id="file-input" accept="image/*" hidden>
+                        <div class="upload-icon">📷</div>
+                        <p id="upload-text">Click or drag to upload plant image</p>
+                        <p class="upload-hint" id="upload-hint">Supports: JPG, PNG, JPEG</p>
+                    </div>
+                </div>
+
+                <!-- Content Area - Side by Side Preview and Results -->
+                <div class="content-area" id="content-area">
+                    <!-- Preview Section -->
+                    <div class="preview-section" id="preview-section" style="display: none;">
+                        <img id="preview-image" src="" alt="Preview">
+                        <button class="btn btn-secondary" id="clear-btn">Clear</button>
+                    </div>
+
+                    <!-- Results Section -->
+                    <div class="results-section" id="results-section" style="display: none;">
+                        <div class="result-card">
+                            <h3 id="result-title">📊 Detection Results</h3>
+                            <div class="disease-name">
+                                <strong id="disease-label">Disease:</strong>
+                                <span id="disease-value"></span>
+                            </div>
+                            <div class="confidence">
+                                <strong id="confidence-label">Confidence:</strong>
+                                <span id="confidence-value"></span>
+                            </div>
+                            <div class="treatment">
+                                <strong id="treatment-label">💊 Treatment:</strong>
+                                <p id="treatment-value"></p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Analyze Button -->
+                <button class="btn btn-primary" id="analyze-btn" disabled>
+                    <span id="analyze-text">Analyze Image</span>
+                </button>
+            </div>
+
+            <!-- Right Panel - Chatbot -->
+            <div class="right-panel">
+                <div class="panel-header">
+                    <h2 id="chat-title">💬 Ask Me Anything</h2>
+                </div>
+
+                <div class="chat-container">
+                    <div class="chat-messages" id="chat-messages">
+                        <!-- Welcome message -->
+                        <div class="message bot-message">
+                            <div class="message-content" id="welcome-message">
+                                Hello! I'm your agricultural assistant. Ask me about crop diseases, pests, or farming practices. You can also upload a plant image for disease detection!
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="chat-input-container">
+                        <select id="input-translate-select" class="language-dropdown" style="min-width: 150px; margin-right: 10px;">
+                            <option value="none">No Translation</option>
+                            <option value="en">English</option>
+                            <option value="hi">हिन्दी</option>
+                            <option value="ta">தமிழ்</option>
+                            <option value="te">తెలుగు</option>
+                            <option value="ml">മലയാളം</option>
+                        </select>
+                        <input 
+                            type="text" 
+                            id="chat-input" 
+                            class="chat-input"
+                            placeholder="Type your question here..."
+                            autocomplete="off"
+                        >
+                        <button class="btn btn-send" id="send-btn">
+                            <span>➤</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <footer class="footer">
+            <p id="footer-text">🌾 AgroBot Universal | Powered by Custom CNN & NLP | Multilingual Support</p>
+        </footer>
+    </div>
+
+    <script>
+        // Store current language
+        window.currentLanguage = 'en';
+    </script>
+    <script src="{{ url_for('static', filename='js/script.js') }}"></script>
+</body>
+</html>

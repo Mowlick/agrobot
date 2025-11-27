@@ -1,0 +1,17 @@
+
+PLANT DISEASE DETECTION – FINAL PROJECT
+=======================================
+Name: Mowlick
+Date: 2025-11-19 12:59
+Dataset: C:\Users\Mowlick\Downloads\inf_projects\AgroBot-Universal\plantvillagedata
+
+RESULTS
+- Test Accuracy: 96.76%
+- Best Val Accuracy: 97.00%
+- Train/Val/Test: 38014 / 8145 / 8147
+
+FILES GENERATED
+- best_model.pth
+- curves.png
+- confusion.png
+- this script
