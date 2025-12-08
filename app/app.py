@@ -4,6 +4,12 @@ No pretrained NLP models - Pure custom implementation
 """
 
 import os
+import sys
+
+# Add current directory to Python path to ensure imports work
+current_dir = os.path.dirname(os.path.abspath(__file__))
+sys.path.insert(0, current_dir)
+
 import json
 import numpy as np
 from flask import Flask, render_template, request, jsonify, session, redirect, url_for
@@ -11,7 +17,6 @@ import torch
 import torch.nn.functional as F
 from torchvision import transforms
 from PIL import Image
-import sys
 from werkzeug.utils import secure_filename
 
 # Import configuration

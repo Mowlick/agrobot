@@ -2,22 +2,49 @@
 Multilingual NLP Processor
 Integrates custom NLP engine with bidirectional translation
 All internal processing happens in English
+FIXED: Better symptom preservation during translation
 """
 
 from typing import Dict, Optional
 import sys
 import os
 
-# Import custom modules
-sys.path.append(os.path.dirname(__file__))
+# Get the absolute path to the current directory
+current_dir = os.path.dirname(os.path.abspath(__file__))
+if current_dir not in sys.path:
+    sys.path.insert(0, current_dir)
 
+# Initialize modules as None
+bidirectional_translator = None
+to_english = None
+from_english = None
+detect_lang = None
+nlp_engine = None
+
+# Import custom modules
 try:
-    from enhanced_translator import bidirectional_translator, to_english, from_english, detect_lang
+    # Import enhanced_translator
+    from enhanced_translator import (
+        bidirectional_translator,
+        to_english as et_to_english,
+        from_english as et_from_english,
+        detect_lang as et_detect_lang
+    )
+    to_english = et_to_english
+    from_english = et_from_english
+    detect_lang = et_detect_lang
+    
+    # Import custom_nlp_system
     from custom_nlp_system import nlp_engine
-except ImportError:
-    print("Warning: Could not import custom modules. Using fallback mode.")
-    bidirectional_translator = None
-    nlp_engine = None
+    
+    print("Successfully imported all custom modules")
+except ImportError as e:
+    print(f"Error importing custom modules: {e}")
+    import traceback
+    traceback.print_exc()
+    print(f"Current sys.path: {sys.path}")
+    print(f"Current directory: {os.path.abspath(os.curdir)}")
+    print("Available files in directory:", os.listdir(current_dir))
 
 
 class MultilingualNLPProcessor:
@@ -29,6 +56,8 @@ class MultilingualNLPProcessor:
     2. NLP processing in English
     3. Response generation in English
     4. English → User's language
+    
+    FIXED: Better handling of symptom keywords during translation
     """
     
     def __init__(self):
@@ -39,6 +68,58 @@ class MultilingualNLPProcessor:
             'disease': None,
             'language': 'en'
         }
+        
+        # Symptom keyword mapping for better translation
+        self.symptom_keywords_mapping = {
+            # Hindi
+            'पीला': 'yellow', 'पीली': 'yellow', 'भूरा': 'brown', 'काला': 'black',
+            'सफेद': 'white', 'धब्बे': 'spots', 'मुरझाना': 'wilting', 'सड़न': 'rot',
+            'फफूंद': 'mold', 'जंग': 'rust', 'पाउडर': 'powdery',
+            # Tamil
+            'மஞ்சள்': 'yellow', 'பழுப்பு': 'brown', 'கருப்பு': 'black', 'வெள்ளை': 'white',
+            'புள்ளிகள்': 'spots', 'வாடுதல்': 'wilting', 'அழுகல்': 'rot', 'பூஞ்சை': 'mold',
+            'துரு': 'rust', 'தூள்': 'powdery', 'இலை': 'leaf',
+            # Telugu
+            'పసుపు': 'yellow', 'గోధుమ': 'brown', 'నలుపు': 'black', 'తెలుపు': 'white',
+            'మచ్చలు': 'spots', 'విల్టింగ్': 'wilting', 'కుళ్ళు': 'rot', 'ఫంగస్': 'mold',
+            'తుప్పు': 'rust', 'పొడి': 'powdery', 'ఆకు': 'leaf',
+            # Malayalam
+            'മഞ്ഞ': 'yellow', 'തവിട്ട്': 'brown', 'കറുപ്പ്': 'black', 'വെള്ള': 'white',
+            'പാടുകൾ': 'spots', 'വാടൽ': 'wilting', 'ചീയൽ': 'rot', 'പൂപ്പൽ': 'mold',
+            'തുരുമ്പ്': 'rust', 'പൊടി': 'powdery', 'ഇല': 'leaf'
+        }
+    
+    def enhance_translation_for_symptoms(self, text, translated_text, user_lang):
+        """
+        Enhance translated text by ensuring symptom keywords are preserved
+        
+        Args:
+            text: Original text in user's language
+            translated_text: Machine-translated English text
+            user_lang: User's language code
+        
+        Returns:
+            Enhanced English text with symptom keywords
+        """
+        if user_lang == 'en':
+            return translated_text
+        
+        # Add explicit symptom keywords if found in original
+        enhanced = translated_text
+        found_symptoms = []
+        
+        for native_word, english_word in self.symptom_keywords_mapping.items():
+            if native_word in text:
+                # Check if English equivalent is missing
+                if english_word not in enhanced.lower():
+                    found_symptoms.append(english_word)
+        
+        # Append found symptoms to enhance translation
+        if found_symptoms:
+            enhanced = f"{enhanced} (showing: {', '.join(found_symptoms)})"
+            print(f"[TRANSLATION ENHANCEMENT] Added symptom keywords: {found_symptoms}")
+        
+        return enhanced
     
     def process_user_message(self, user_message, explicit_lang=None, image_prediction=None, context_disease=None):
         """
@@ -66,8 +147,11 @@ class MultilingualNLPProcessor:
             # Step 2: Translate to English
             english_text = to_english(user_message, user_lang)
             
-            print(f"[NLP] Original: {user_message}")
-            print(f"[NLP] English: {english_text}")
+            # Step 2.5: Enhance translation with symptom keywords (FIXED)
+            english_text = self.enhance_translation_for_symptoms(user_message, english_text, user_lang)
+            
+            print(f"[NLP] Original ({user_lang}): {user_message}")
+            print(f"[NLP] Enhanced English: {english_text}")
             print(f"[NLP] Current context disease: {self.conversation_context.get('disease')}")
             
             # Step 3: Process with NLP engine
@@ -228,19 +312,24 @@ def test_multilingual_nlp():
             'description': 'English symptom description'
         },
         {
-            'message': 'नमस्ते, मेरी मदद करें',
-            'lang': 'hi',
-            'description': 'Hindi greeting'
-        },
-        {
-            'message': 'टमाटर के पत्तों पर भूरे धब्बे हैं',
+            'message': 'टमाटर के पत्तों पर भूरे धब्बे हैं और पत्तियाँ पीली हो रही हैं',
             'lang': 'hi',
             'description': 'Hindi symptom description'
         },
         {
-            'message': 'வணக்கம், எனக்கு உதவி செய்யுங்கள்',
+            'message': 'தக்காளி இலைகளில் பழுப்பு புள்ளிகள் மற்றும் மஞ்சள் நிறம்',
             'lang': 'ta',
-            'description': 'Tamil greeting'
+            'description': 'Tamil symptom description'
+        },
+        {
+            'message': 'టమాటో ఆకులపై గోధుమ మచ్చలు మరియు పసుపు రంగు',
+            'lang': 'te',
+            'description': 'Telugu symptom description'
+        },
+        {
+            'message': 'തക്കാളി ഇലകളിൽ തവിട്ട് പാടുകളും മഞ്ഞ നിറവും',
+            'lang': 'ml',
+            'description': 'Malayalam symptom description'
         }
     ]
     
@@ -252,7 +341,7 @@ def test_multilingual_nlp():
         
         print(f"Detected Language: {result.get('language', 'N/A')}")
         print(f"English Translation: {result.get('english_text', 'N/A')}")
-        print(f"Response ({result.get('language', 'N/A')}): {result.get('response', 'N/A')}")
+        print(f"Response ({result.get('language', 'N/A')}): {result.get('response', 'N/A')[:100]}...")
         print(f"Status: {result.get('status', 'N/A')}")
     
     print("\n" + "=" * 60)
@@ -262,12 +351,17 @@ def test_multilingual_nlp():
     # Test image prediction
     image_result = process_image('tomato_early_blight', 95.5, 'hi')
     print(f"\nImage Prediction (Hindi):")
-    print(f"Response: {image_result.get('response', 'N/A')}")
+    print(f"Response: {image_result.get('response', 'N/A')[:100]}...")
     
-    # Test follow-up question
+    # Test follow-up question in Hindi
     followup_result = process_message('इसका इलाज क्या है?', 'hi')
-    print(f"\nFollow-up Question (Hindi):")
-    print(f"Response: {followup_result.get('response', 'N/A')}")
+    print(f"\nFollow-up Question (Hindi - 'What is the treatment?'):")
+    print(f"Response: {followup_result.get('response', 'N/A')[:100]}...")
+    
+    # Test severity question in English
+    severity_result = process_message('Is this serious?', 'en')
+    print(f"\nSeverity Question (English):")
+    print(f"Response: {severity_result.get('response', 'N/A')[:100]}...")
     
     print("\n" + "=" * 60)
 
