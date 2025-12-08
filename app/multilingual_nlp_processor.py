@@ -40,7 +40,7 @@ class MultilingualNLPProcessor:
             'language': 'en'
         }
     
-    def process_user_message(self, user_message, explicit_lang=None, image_prediction=None):
+    def process_user_message(self, user_message, explicit_lang=None, image_prediction=None, context_disease=None):
         """
         Complete multilingual processing pipeline
         
@@ -48,6 +48,7 @@ class MultilingualNLPProcessor:
             user_message: User's input text (any supported language)
             explicit_lang: Explicitly specified language (optional)
             image_prediction: Dict with disease_key and confidence (if image was uploaded)
+            context_disease: Current disease context from session (optional)
         
         Returns:
             Dict with response, language, and context
@@ -81,8 +82,9 @@ class MultilingualNLPProcessor:
                 self.conversation_context['disease'] = disease_key
             
             else:
-                # Text-based query - might override context with new symptoms
-                context_disease = self.conversation_context.get('disease')
+                # Use provided context_disease or fall back to conversation context
+                context_disease = context_disease or self.conversation_context.get('disease')
+                self.conversation_context['disease'] = context_disease  # Update context
                 
                 print(f"[NLP] Processing TEXT query with context: {context_disease}")
                 
@@ -186,9 +188,14 @@ multilingual_processor = MultilingualNLPProcessor()
 
 
 # Convenience functions
-def process_message(user_message, lang=None, image_prediction=None):
+def process_message(user_message, lang=None, image_prediction=None, context_disease=None):
     """Process user message with automatic translation"""
-    return multilingual_processor.process_user_message(user_message, lang, image_prediction)
+    return multilingual_processor.process_user_message(
+        user_message=user_message,
+        explicit_lang=lang,
+        image_prediction=image_prediction,
+        context_disease=context_disease
+    )
 
 
 def process_image(disease_key, confidence, lang='en'):

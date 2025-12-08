@@ -6,16 +6,23 @@ No pretrained NLP models - Pure custom implementation
 import os
 import json
 import numpy as np
-from flask import Flask, render_template, request, jsonify, session
-from werkzeug.utils import secure_filename
+from flask import Flask, render_template, request, jsonify, session, redirect, url_for
 import torch
 import torch.nn.functional as F
 from torchvision import transforms
 from PIL import Image
 import sys
+from werkzeug.utils import secure_filename
 
 # Import configuration
 from config import MODEL_PATH, CLASS_NAMES_PATH, UPLOAD_FOLDER, ALLOWED_EXTENSIONS, IMG_SIZE, NUM_CLASSES
+
+# Demo user configuration
+DEMO_USER = {
+    'id': 1,
+    'name': 'Demo User',
+    'email': 'demo@example.com'
+}
 
 # Add model directory to path
 sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'model'))
@@ -30,13 +37,13 @@ app = Flask(
     static_folder=os.path.join(os.path.dirname(__file__), '..', 'static')
 )
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
-app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024
+app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16MB max file size
 app.secret_key = 'your-secret-key-for-sessions'
 
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
 # --- MODEL LOADING ---
-print("🔄 Loading PyTorch model...")
+print(" Loading PyTorch model...")
 model = None
 device = None
 class_names = []
@@ -58,44 +65,32 @@ try:
     with open(class_names_path, 'r') as f:
         class_names = json.load(f)
     
-    print(f"✅ Model loaded successfully! Device: {device}")
+    print(f" Model loaded successfully! Device: {device}")
     print(f"Number of classes: {len(class_names)}")
     
 except Exception as e:
-    print(f"❌ Error loading model: {str(e)}")
+    print(f" Error loading model: {str(e)}")
     class_names = []
 
+# Login required decorator
+def login_required(f):
+    def decorated_function(*args, **kwargs):
+        if 'user_id' not in session:
+            return redirect(url_for('login', next=request.url))
+        return f(*args, **kwargs)
+    decorated_function.__name__ = f.__name__
+    return decorated_function
 
 def allowed_file(filename):
-    """Check if file extension is allowed"""
-    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
-
-
-def preprocess_image(image_path):
-    """Preprocess image for PyTorch model prediction"""
-    try:
-        transform = transforms.Compose([
-            transforms.Resize((224, 224)),
-            transforms.ToTensor(),
-            transforms.Normalize(mean=[0.485, 0.456, 0.406], 
-                               std=[0.229, 0.224, 0.225])
-        ])
-        
-        image = Image.open(image_path).convert('RGB')
-        image_tensor = transform(image).unsqueeze(0)
-        
-        return image_tensor.to(device)
-        
-    except Exception as e:
-        print(f"Error preprocessing image: {e}")
-        return None
-
-
-# --- ROUTES ---
+    """Check if the file has an allowed extension"""
+    return '.' in filename and \
+           filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
 @app.route('/')
 def index():
     """Render main page"""
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
     # Initialize session
     if 'user_language' not in session:
         session['user_language'] = 'en'
@@ -104,8 +99,71 @@ def index():
     
     return render_template('index.html')
 
+@app.route('/demo-login', methods=['POST'])
+def demo_login():
+    """Handle demo user login"""
+    # Set demo user data in session
+    session['user_id'] = DEMO_USER['id']
+    session['user_name'] = 'Demo User'
+    
+    return jsonify({
+        'success': True,
+        'message': 'Demo login successful',
+        'user': {'name': 'Demo User'}
+    })
+
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+    """Handle user login (demo mode)"""
+    if request.method == 'GET':
+        return render_template('login.html')
+        
+    # In demo mode, any non-empty credentials will work
+    email = request.json.get('email', '').strip()
+    if not email:
+        return jsonify({'success': False, 'error': 'Email is required'}), 400
+        
+    # Set demo user data in session
+    session['user_id'] = DEMO_USER['id']
+    session['user_name'] = email.split('@')[0]  # Use the part before @ as username
+    
+    return jsonify({
+        'success': True, 
+        'message': 'Login successful',
+        'user': {'name': session['user_name']}
+    })
+
+@app.route('/register', methods=['POST'])
+def register():
+    """Handle new user registration (demo mode)"""
+    name = request.json.get('name', '').strip()
+    email = request.json.get('email', '').strip()
+    
+    if not email:
+        return jsonify({'success': False, 'error': 'Email is required'}), 400
+    
+    # In demo mode, just set the username from email if name not provided
+    username = name if name else email.split('@')[0]
+    
+    # Set demo user data in session
+    session['user_id'] = DEMO_USER['id']
+    session['user_name'] = username
+    
+    return jsonify({
+        'success': True, 
+        'message': 'Registration successful!',
+        'user': {'name': username}
+    })
+
+@app.route('/logout')
+def logout():
+    """Handle user logout"""
+    session.pop('user_id', None)
+    session.pop('user_name', None)
+    return redirect(url_for('login'))
 
 @app.route('/chat', methods=['POST'])
+@login_required
 def chat():
     """
     Handle chat messages with multilingual NLP
@@ -134,16 +192,16 @@ def chat():
         
         # Get current context
         context = session.get('conversation_context', {})
-        disease_context = context.get('disease')
+        context_disease = context.get('disease')
         
-        print(f"[CHAT] Session context disease: {disease_context}")
+        print(f"[CHAT] Session context disease: {context_disease}")
         
-        # Don't pass image_prediction for text queries
-        # Only pass context disease, let NLP decide if it's relevant
+        # Process the message with context
         result = process_message(
             user_message=user_message,
             lang=explicit_lang,
-            image_prediction=None  # Never pass image prediction for text queries
+            image_prediction=None,  # Never pass image prediction for text queries
+            context_disease=context_disease  # Pass the current disease context
         )
         
         if result.get('status') == 'error':
@@ -177,8 +235,8 @@ def chat():
             'response': 'Sorry, I encountered an error. Please try again.'
         }), 500
 
-
 @app.route('/predict', methods=['POST'])
+@login_required
 def predict():
     """
     Handle image prediction with multilingual response
@@ -266,8 +324,8 @@ def predict():
         traceback.print_exc()
         return jsonify({'error': str(e)}), 500
 
-
-@app.route('/reset_conversation', methods=['POST'])
+@app.route('/reset', methods=['POST'])
+@login_required
 def reset_conversation():
     """Reset conversation context"""
     try:
@@ -283,8 +341,8 @@ def reset_conversation():
             'error': str(e)
         }), 500
 
-
-@app.route('/set_language', methods=['POST'])
+@app.route('/set-language', methods=['POST'])
+@login_required
 def set_language():
     """Set user's preferred language"""
     try:
@@ -310,8 +368,8 @@ def set_language():
             'error': str(e)
         }), 500
 
-
 @app.route('/health')
+@login_required
 def health():
     """Health check endpoint"""
     return jsonify({
@@ -331,8 +389,8 @@ def health():
         }
     })
 
-
-@app.route('/supported_languages')
+@app.route('/languages')
+@login_required
 def supported_languages():
     """Return list of supported languages"""
     return jsonify({

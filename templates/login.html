@@ -1,0 +1,713 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AgroBot Universal - Login</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary-color: #1f7a4d;
+            --secondary-color: #25a05a;
+            --accent-color: #76d275;
+            --white: #ffffff;
+            --text-dark: #333333;
+            --text-light: #666666;
+            --border-color: #e6ece8;
+            --shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+            --error-color: #f44336;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #edf7f0 0%, #dff2e6 100%);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .auth-container {
+            background: var(--white);
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(31, 122, 77, 0.15);
+            overflow: hidden;
+            width: 100%;
+            max-width: 900px;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            min-height: 550px;
+        }
+
+        .auth-left {
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            padding: 60px 40px;
+            color: var(--white);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+        }
+
+        .auth-left h1 {
+            font-size: 2.5em;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .auth-left p {
+            font-size: 1.1em;
+            line-height: 1.6;
+            opacity: 0.95;
+            margin-bottom: 30px;
+        }
+
+        .feature-list {
+            text-align: left;
+            margin-top: 20px;
+        }
+
+        .feature-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 15px;
+            font-size: 0.95em;
+        }
+
+        .feature-item::before {
+            content: "✓";
+            background: rgba(255, 255, 255, 0.3);
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+
+        .auth-right {
+            padding: 60px 40px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        .auth-header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .auth-header h2 {
+            color: var(--primary-color);
+            font-size: 2em;
+            margin-bottom: 10px;
+        }
+
+        .auth-header p {
+            color: var(--text-light);
+            font-size: 0.95em;
+        }
+
+        .form-group {
+            margin-bottom: 25px;
+        }
+
+        .form-group label {
+            display: block;
+            color: var(--text-dark);
+            font-weight: 600;
+            margin-bottom: 8px;
+            font-size: 0.95em;
+        }
+
+        .input-wrapper {
+            position: relative;
+        }
+
+        .input-icon {
+            position: absolute;
+            left: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-light);
+            font-size: 1.1em;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 14px 45px;
+            border: 2px solid var(--border-color);
+            border-radius: 12px;
+            font-size: 1em;
+            transition: all 0.3s ease;
+            outline: none;
+        }
+
+        .form-input:focus {
+            border-color: var(--secondary-color);
+            box-shadow: 0 0 0 3px rgba(37, 160, 90, 0.1);
+        }
+
+        .form-input.error {
+            border-color: var(--error-color);
+        }
+
+        .error-message {
+            color: var(--error-color);
+            font-size: 0.85em;
+            margin-top: 5px;
+            display: none;
+        }
+
+        .error-message.show {
+            display: block;
+        }
+
+        .password-toggle {
+            position: absolute;
+            right: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            color: var(--text-light);
+            cursor: pointer;
+            font-size: 1.1em;
+            padding: 5px;
+        }
+
+        .checkbox-group {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 25px;
+        }
+
+        .checkbox-group input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            cursor: pointer;
+        }
+
+        .checkbox-group label {
+            color: var(--text-light);
+            font-size: 0.9em;
+            cursor: pointer;
+        }
+
+        .btn-primary {
+            width: 100%;
+            padding: 14px;
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            color: var(--white);
+            border: none;
+            border-radius: 12px;
+            font-size: 1.1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 12px rgba(37, 160, 90, 0.3);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(37, 160, 90, 0.4);
+        }
+
+        .btn-primary:active {
+            transform: translateY(0);
+        }
+
+        .demo-login-btn {
+            width: 100%;
+            padding: 14px;
+            background: #5c6bc0;
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 1.1em;
+            font-weight: 600;
+            cursor: pointer;
+            margin-top: 15px;
+            transition: all 0.3s ease;
+            text-align: center;
+        }
+
+        .demo-login-btn:hover {
+            background: #3f51b5;
+            transform: translateY(-2px);
+        }
+
+        .auth-switch {
+            text-align: center;
+            margin-top: 25px;
+            color: var(--text-light);
+            font-size: 0.95em;
+        }
+
+        .auth-switch a {
+            color: var(--primary-color);
+            text-decoration: none;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        .auth-switch a:hover {
+            color: var(--secondary-color);
+            text-decoration: underline;
+        }
+
+        .divider {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin: 25px 0;
+            color: var(--text-light);
+            font-size: 0.9em;
+        }
+
+        .divider::before,
+        .divider::after {
+            content: "";
+            flex: 1;
+            height: 1px;
+            background: var(--border-color);
+        }
+
+        .social-login {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+
+        .social-btn {
+            padding: 12px;
+            border: 2px solid var(--border-color);
+            border-radius: 12px;
+            background: var(--white);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 0.95em;
+            font-weight: 600;
+            color: var(--text-dark);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .social-btn:hover {
+            border-color: var(--secondary-color);
+            background: rgba(37, 160, 90, 0.05);
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        @media (max-width: 768px) {
+            .auth-container {
+                grid-template-columns: 1fr;
+                max-width: 500px;
+            }
+
+            .auth-left {
+                padding: 40px 30px;
+                min-height: auto;
+            }
+
+            .auth-left h1 {
+                font-size: 2em;
+            }
+
+            .feature-list {
+                display: none;
+            }
+
+            .auth-right {
+                padding: 40px 30px;
+            }
+
+            .social-login {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .loading {
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top-color: var(--white);
+            animation: spin 1s ease-in-out infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="auth-container">
+        <!-- Left Panel -->
+        <div class="auth-left">
+            <h1>🌱 AgroBot</h1>
+            <p>Your AI-powered agricultural companion for plant disease detection and farming guidance</p>
+            
+            <div class="feature-list">
+                <div class="feature-item">AI-based disease detection</div>
+                <div class="feature-item">Multilingual support</div>
+                <div class="feature-item">Real-time farming advice</div>
+                <div class="feature-item">Expert treatment recommendations</div>
+            </div>
+        </div>
+
+        <!-- Right Panel - Sign In Form -->
+        <div class="auth-right">
+            <div id="signin-form">
+                <div class="auth-header">
+                    <h2>Welcome Back!</h2>
+                    <p>Sign in to continue to AgroBot</p>
+                </div>
+
+                <form id="signin-form-element">
+                    <div class="form-group">
+                        <label for="signin-email">Email Address</label>
+                        <div class="input-wrapper">
+                            <span class="input-icon">📧</span>
+                            <input 
+                                type="email" 
+                                id="signin-email" 
+                                class="form-input" 
+                                placeholder="Enter your email"
+                                required
+                            >
+                        </div>
+                        <span class="error-message" id="signin-email-error"></span>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="signin-password">Password</label>
+                        <div class="input-wrapper">
+                            <span class="input-icon">🔒</span>
+                            <input 
+                                type="password" 
+                                id="signin-password" 
+                                class="form-input" 
+                                placeholder="Enter your password"
+                                required
+                            >
+                            <button type="button" class="password-toggle" onclick="togglePassword('signin-password')">👁️</button>
+                        </div>
+                        <span class="error-message" id="signin-password-error"></span>
+                    </div>
+
+                    <button type="submit" class="btn-primary">Sign In</button>
+                </form>
+
+                <div class="auth-switch">
+                    Don't have an account? <a onclick="showSignUp()">Sign up</a>
+                </div>
+            </div>
+
+            <!-- Sign Up Form (Initially Hidden) -->
+            <div id="signup-form" class="hidden">
+                <div class="auth-header">
+                    <h2>Create Account</h2>
+                    <p>Join AgroBot to get started</p>
+                </div>
+
+                <form id="signup-form-element">
+                    <div class="form-group">
+                        <label for="signup-name">Full Name</label>
+                        <div class="input-wrapper">
+                            <span class="input-icon">👤</span>
+                            <input 
+                                type="text" 
+                                id="signup-name" 
+                                class="form-input" 
+                                placeholder="Enter your full name"
+                                required
+                            >
+                        </div>
+                        <span class="error-message" id="signup-name-error"></span>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="signup-email">Email Address</label>
+                        <div class="input-wrapper">
+                            <span class="input-icon">📧</span>
+                            <input 
+                                type="email" 
+                                id="signup-email" 
+                                class="form-input" 
+                                placeholder="Enter your email"
+                                required
+                            >
+                        </div>
+                        <span class="error-message" id="signup-email-error"></span>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="signup-password">Password</label>
+                        <div class="input-wrapper">
+                            <span class="input-icon">🔒</span>
+                            <input 
+                                type="password" 
+                                id="signup-password" 
+                                class="form-input" 
+                                placeholder="Create a password"
+                                required
+                            >
+                            <button type="button" class="password-toggle" onclick="togglePassword('signup-password')">👁️</button>
+                        </div>
+                        <span class="error-message" id="signup-password-error"></span>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="signup-confirm-password">Confirm Password</label>
+                        <div class="input-wrapper">
+                            <span class="input-icon">🔒</span>
+                            <input 
+                                type="password" 
+                                id="signup-confirm-password" 
+                                class="form-input" 
+                                placeholder="Confirm your password"
+                                required
+                            >
+                            <button type="button" class="password-toggle" onclick="togglePassword('signup-confirm-password')">👁️</button>
+                        </div>
+                        <span class="error-message" id="signup-confirm-password-error"></span>
+                    </div>
+
+                    <div class="checkbox-group">
+                        <input type="checkbox" id="terms">
+                        <label for="terms">I agree to the Terms & Conditions</label>
+                    </div>
+
+
+                    <button type="submit" class="btn-primary">Create Account</button>
+                </form>
+
+                <div class="auth-switch">
+                    Already have an account? <a onclick="showSignIn()">Sign in</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function showSignUp() {
+            document.getElementById('signin-form').classList.add('hidden');
+            document.getElementById('signup-form').classList.remove('hidden');
+        }
+
+        function showSignIn() {
+            document.getElementById('signup-form').classList.add('hidden');
+            document.getElementById('signin-form').classList.remove('hidden');
+        }
+
+        function togglePassword(inputId) {
+            const input = document.getElementById(inputId);
+            const button = input.nextElementSibling;
+            
+            if (input.type === 'password') {
+                input.type = 'text';
+                button.textContent = '🙈';
+            } else {
+                input.type = 'password';
+                button.textContent = '👁️';
+            }
+        }
+
+        function validateEmail(email) {
+            const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            return re.test(email);
+        }
+
+        function validatePassword(password) {
+            return password.length >= 6;
+        }
+
+        // Sign In Form Submission
+        document.getElementById('signin-form-element').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const email = document.getElementById('signin-email').value;
+            const password = document.getElementById('signin-password').value;
+            const button = e.target.querySelector('.btn-primary');
+            
+            // Clear previous errors
+            document.querySelectorAll('.error-message').forEach(el => {
+                el.classList.remove('show');
+                el.textContent = '';
+            });
+            document.querySelectorAll('.form-input').forEach(el => {
+                el.classList.remove('error');
+            });
+
+            // Validation
+            let hasError = false;
+
+            if (!validateEmail(email)) {
+                document.getElementById('signin-email').classList.add('error');
+                document.getElementById('signin-email-error').textContent = 'Please enter a valid email';
+                document.getElementById('signin-email-error').classList.add('show');
+                hasError = true;
+            }
+
+            if (!validatePassword(password)) {
+                document.getElementById('signin-password').classList.add('error');
+                document.getElementById('signin-password-error').textContent = 'Password must be at least 6 characters';
+                document.getElementById('signin-password-error').classList.add('show');
+                hasError = true;
+            }
+
+            if (hasError) return;
+
+            // Show loading
+            const originalText = button.textContent;
+            button.innerHTML = '<span class="loading"></span> Signing in...';
+            button.disabled = true;
+
+            try {
+                // Auto-login without checking credentials
+                const response = await fetch('/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ 
+                        email: email,
+                        name: email.split('@')[0] // Use email prefix as name
+                    })
+                });
+
+                if (response.ok) {
+                    // Redirect to main app
+                    window.location.href = '/';
+                } else {
+                    const error = await response.json();
+                    throw new Error(error.message || 'Failed to sign in');
+                }
+            } catch (error) {
+                alert('Sign in failed: ' + error.message);
+                button.textContent = originalText;
+                button.disabled = false;
+            }
+        });
+
+        // Sign Up Form Submission
+        document.getElementById('signup-form-element').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const name = document.getElementById('signup-name').value;
+            const email = document.getElementById('signup-email').value;
+            const password = document.getElementById('signup-password').value;
+            const confirmPassword = document.getElementById('signup-confirm-password').value;
+            const terms = document.getElementById('terms').checked;
+            const button = e.target.querySelector('.btn-primary');
+
+            // Clear previous errors
+            document.querySelectorAll('.error-message').forEach(el => {
+                el.classList.remove('show');
+                el.textContent = '';
+            });
+            document.querySelectorAll('.form-input').forEach(el => {
+                el.classList.remove('error');
+            });
+
+            // Validation
+            let hasError = false;
+
+            if (name.trim().length < 2) {
+                document.getElementById('signup-name').classList.add('error');
+                document.getElementById('signup-name-error').textContent = 'Name must be at least 2 characters';
+                document.getElementById('signup-name-error').classList.add('show');
+                hasError = true;
+            }
+
+            if (!validateEmail(email)) {
+                document.getElementById('signup-email').classList.add('error');
+                document.getElementById('signup-email-error').textContent = 'Please enter a valid email';
+                document.getElementById('signup-email-error').classList.add('show');
+                hasError = true;
+            }
+
+            if (!validatePassword(password)) {
+                document.getElementById('signup-password').classList.add('error');
+                document.getElementById('signup-password-error').textContent = 'Password must be at least 6 characters';
+                document.getElementById('signup-password-error').classList.add('show');
+                hasError = true;
+            }
+
+            if (password !== confirmPassword) {
+                document.getElementById('signup-confirm-password').classList.add('error');
+                document.getElementById('signup-confirm-password-error').textContent = 'Passwords do not match';
+                document.getElementById('signup-confirm-password-error').classList.add('show');
+                hasError = true;
+            }
+
+            if (!terms) {
+                alert('Please accept the Terms & Conditions');
+                hasError = true;
+            }
+
+            if (hasError) return;
+
+            // Show loading
+            const originalText = button.textContent;
+            button.innerHTML = '<span class="loading"></span> Creating account...';
+            button.disabled = true;
+
+            try {
+                // First register the user
+                const registerResponse = await fetch('/register', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ 
+                        name: name,
+                        email: email
+                    })
+                });
+
+                const registerData = await registerResponse.json();
+                
+                if (registerResponse.ok) {
+                    // If registration is successful, log in
+                    const loginResponse = await fetch('/login', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ email: email })
+                    });
+                    
+                    const loginData = await loginResponse.json();
+                    
+                    if (loginResponse.ok) {
+                        // Redirect to main app
+                        window.location.href = '/';
+                    } else {
+                        throw new Error(loginData.error || 'Failed to log in after registration');
+                    }
+                } else {
+                    throw new Error(registerData.error || 'Registration failed');
+                }
+            } catch (error) {
+                alert('Registration failed: ' + error.message);
+                button.textContent = originalText;
+                button.disabled = false;
+            }
+        });
+    </script>
+</body>
+</html>

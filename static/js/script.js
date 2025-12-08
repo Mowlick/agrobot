@@ -1,4 +1,4 @@
-// Enhanced script.js with language switching and translation
+// Enhanced script.js with improved language dropdown (no chat input translation)
 
 // UI Text Translations
 const translations = {
@@ -89,14 +89,21 @@ const translations = {
     }
 };
 
+// Language display names
+const languageDisplayNames = {
+    'en': 'English',
+    'hi': 'हिन्दी',
+    'ta': 'தமிழ்',
+    'te': 'తెలుగు',
+    'ml': 'മലയാളം'
+};
+
 // Variables
 let selectedFile = null;
 let lastPredictionContext = null;
 let currentLanguage = 'en';
 
 // Elements
-const languageSelect = document.getElementById('language-select');
-const inputTranslateSelect = document.getElementById('input-translate-select');
 const uploadArea = document.getElementById('upload-area');
 const fileInput = document.getElementById('file-input');
 const previewSection = document.getElementById('preview-section');
@@ -108,11 +115,67 @@ const chatInput = document.getElementById('chat-input');
 const sendBtn = document.getElementById('send-btn');
 const chatMessages = document.getElementById('chat-messages');
 
-// Language change handler
-languageSelect.addEventListener('change', (e) => {
-    currentLanguage = e.target.value;
+// Language Dropdown Functions
+function toggleLanguageDropdown() {
+    const dropdown = document.getElementById('lang-dropdown');
+    const button = document.getElementById('lang-dropdown-btn');
+    
+    dropdown.classList.toggle('show');
+    button.classList.toggle('open');
+}
+
+function changeLanguage(langCode, langName) {
+    currentLanguage = langCode;
+    
+    // Update display button
+    document.getElementById('current-lang-display').textContent = languageDisplayNames[langCode];
+    
+    // Remove active class from all options
+    document.querySelectorAll('.lang-option').forEach(opt => {
+        opt.classList.remove('active');
+    });
+    
+    // Add active class to selected option
+    const selectedOption = document.querySelector(`.lang-option[data-lang="${langCode}"]`);
+    if (selectedOption) {
+        selectedOption.classList.add('active');
+    }
+    
+    // Close dropdown
+    document.getElementById('lang-dropdown').classList.remove('show');
+    document.getElementById('lang-dropdown-btn').classList.remove('open');
+    
+    // Update UI language
     updateUILanguage();
+    
+    // Send to backend
+    fetch('/set_language', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ language: langCode })
+    })
+    .catch(error => console.error('Error setting language:', error));
+}
+
+// Close dropdown when clicking outside
+document.addEventListener('click', function(event) {
+    const dropdown = document.getElementById('lang-dropdown');
+    const button = document.getElementById('lang-dropdown-btn');
+    
+    if (dropdown && button && 
+        !dropdown.contains(event.target) && 
+        !button.contains(event.target)) {
+        dropdown.classList.remove('show');
+        button.classList.remove('open');
+    }
 });
+
+// User Profile Menu (Placeholder)
+function showProfileMenu() {
+    alert('Profile menu coming soon! This will include:\n- Account settings\n- Logout\n- Preferences');
+}
 
 // Update UI language
 function updateUILanguage() {
@@ -177,7 +240,6 @@ function handleFileSelect(file) {
     const reader = new FileReader();
     reader.onload = (e) => {
         previewImage.src = e.target.result;
-        // Hide upload section after upload
         document.querySelector('.upload-section').style.display = 'none';
         previewSection.style.display = 'flex';
         resultsSection.style.display = 'none';
@@ -192,7 +254,6 @@ clearBtn.addEventListener('click', () => {
     fileInput.value = '';
     previewSection.style.display = 'none';
     resultsSection.style.display = 'none';
-    // Show upload section on clear
     document.querySelector('.upload-section').style.display = 'block';
     analyzeBtn.disabled = true;
 });
@@ -226,7 +287,7 @@ analyzeBtn.addEventListener('click', async () => {
         displayResults(data);
         
         // Store context for chat
-        lastPredictionContext = `Last prediction: disease=${data.original_disease}, confidence=${(data.confidence * 100).toFixed(1)}%, treatment={${data.treatment}}`;
+        lastPredictionContext = `disease=${data.original_disease}, confidence=${data.confidence_text}`;
         
     } catch (error) {
         console.error('Error:', error);
@@ -253,38 +314,18 @@ function displayResults(data) {
     resultsSection.style.display = 'block';
 }
 
-// Chat functionality
+// Chat functionality (Simplified - no input translation dropdown)
 sendBtn.addEventListener('click', sendMessage);
 chatInput.addEventListener('keypress', (e) => {
     if (e.key === 'Enter') sendMessage();
 });
 
 async function sendMessage() {
-    let message = chatInput.value.trim();
+    const message = chatInput.value.trim();
     if (!message) return;
     
-    const translateTo = inputTranslateSelect.value;
-    
-    if (translateTo !== 'none') {
-        try {
-            const translateRes = await fetch('/translate', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    text: message,
-                    target_lang: translateTo
-                })
-            });
-            const translateData = await translateRes.json();
-            message = translateData.translated_text;
-        } catch (error) {
-            console.error('Translation error:', error);
-            alert('Failed to translate input. Sending original.');
-        }
-    }
-    
     // Add user message
-    addMessage(chatInput.value, 'user');  // Show original typed
+    addMessage(message, 'user');
     chatInput.value = '';
     
     // Show typing indicator
@@ -297,7 +338,7 @@ async function sendMessage() {
                 'Content-Type': 'application/json'
             },
             body: JSON.stringify({
-                message: message,  // Send translated or original
+                message: message,
                 lang: currentLanguage,
                 context: lastPredictionContext
             })

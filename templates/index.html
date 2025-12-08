@@ -8,20 +8,41 @@
 </head>
 <body>
     <div class="container">
-        <!-- Header -->
+        <!-- Header with Improved Language Selector -->
         <header class="header">
             <div class="header-content">
                 <h1 id="main-title">🚜 AgroBot Universal</h1>
                 <p id="main-subtitle">AI-Based Agricultural Assistant</p>
             </div>
-            <div class="language-selector">
-                <select id="language-select" class="language-dropdown">
-                    <option value="en">English</option>
-                    <option value="hi">हिन्दी (Hindi)</option>
-                    <option value="ta">தமிழ் (Tamil)</option>
-                    <option value="te">తెలుగు (Telugu)</option>
-                    <option value="ml">മലയാളം (Malayalam)</option>
-                </select>
+            <div class="language-selector-wrapper">
+                <div class="user-profile" onclick="showProfileMenu()">
+                    <div class="user-avatar">👤</div>
+                    <span class="user-name">User</span>
+                </div>
+                
+                <div class="language-toggle">
+                    <button class="lang-dropdown-btn" id="lang-dropdown-btn" onclick="toggleLanguageDropdown()">
+                        <span id="current-lang-display">English</span>
+                        <span class="dropdown-arrow">▼</span>
+                    </button>
+                    <div class="lang-dropdown-content" id="lang-dropdown">
+                        <div class="lang-option active" data-lang="en" onclick="changeLanguage('en', 'English')">
+                            <span>English</span>
+                        </div>
+                        <div class="lang-option" data-lang="hi" onclick="changeLanguage('hi', 'हिन्दी')">
+                            <span>हिन्दी (Hindi)</span>
+                        </div>
+                        <div class="lang-option" data-lang="ta" onclick="changeLanguage('ta', 'தமிழ்')">
+                            <span>தமிழ் (Tamil)</span>
+                        </div>
+                        <div class="lang-option" data-lang="te" onclick="changeLanguage('te', 'తెలుగు')">
+                            <span>తెలుగు (Telugu)</span>
+                        </div>
+                        <div class="lang-option" data-lang="ml" onclick="changeLanguage('ml', 'മലയാളം')">
+                            <span>മലയാളം (Malayalam)</span>
+                        </div>
+                    </div>
+                </div>
             </div>
         </header>
 
@@ -77,7 +98,7 @@
                 </button>
             </div>
 
-            <!-- Right Panel - Chatbot -->
+            <!-- Right Panel - Chatbot (Simplified - No Translation Dropdown) -->
             <div class="right-panel">
                 <div class="panel-header">
                     <h2 id="chat-title">💬 Ask Me Anything</h2>
@@ -93,15 +114,8 @@
                         </div>
                     </div>
 
+                    <!-- Simplified Chat Input (No Translation Dropdown) -->
                     <div class="chat-input-container">
-                        <select id="input-translate-select" class="language-dropdown" style="min-width: 150px; margin-right: 10px;">
-                            <option value="none">No Translation</option>
-                            <option value="en">English</option>
-                            <option value="hi">हिन्दी</option>
-                            <option value="ta">தமிழ்</option>
-                            <option value="te">తెలుగు</option>
-                            <option value="ml">മലയാളം</option>
-                        </select>
                         <input 
                             type="text" 
                             id="chat-input" 
@@ -109,7 +123,7 @@
                             placeholder="Type your question here..."
                             autocomplete="off"
                         >
-                        <button class="btn btn-send" id="send-btn">
+                        <button class="btn-send" id="send-btn">
                             <span>➤</span>
                         </button>
                     </div>
@@ -123,10 +137,6 @@
         </footer>
     </div>
 
-    <script>
-        // Store current language
-        window.currentLanguage = 'en';
-    </script>
     <script src="{{ url_for('static', filename='js/script.js') }}"></script>
 </body>
 </html>
