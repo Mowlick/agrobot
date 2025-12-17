@@ -1,29 +1,23 @@
 """
-Multilingual NLP Processor
-Integrates custom NLP engine with bidirectional translation
-All internal processing happens in English
-FIXED: Better symptom preservation during translation
+Enhanced Multilingual NLP Processor
+Better symptom preservation and disease detection from text descriptions
 """
 
 from typing import Dict, Optional
 import sys
 import os
 
-# Get the absolute path to the current directory
 current_dir = os.path.dirname(os.path.abspath(__file__))
 if current_dir not in sys.path:
     sys.path.insert(0, current_dir)
 
-# Initialize modules as None
 bidirectional_translator = None
 to_english = None
 from_english = None
 detect_lang = None
 nlp_engine = None
 
-# Import custom modules
 try:
-    # Import enhanced_translator
     from enhanced_translator import (
         bidirectional_translator,
         to_english as et_to_english,
@@ -34,31 +28,15 @@ try:
     from_english = et_from_english
     detect_lang = et_detect_lang
     
-    # Import custom_nlp_system
     from custom_nlp_system import nlp_engine
     
-    print("Successfully imported all custom modules")
+    print("✓ Modules loaded successfully")
 except ImportError as e:
-    print(f"Error importing custom modules: {e}")
-    import traceback
-    traceback.print_exc()
-    print(f"Current sys.path: {sys.path}")
-    print(f"Current directory: {os.path.abspath(os.curdir)}")
-    print("Available files in directory:", os.listdir(current_dir))
+    print(f"✗ Import error: {e}")
 
 
 class MultilingualNLPProcessor:
-    """
-    Coordinates translation and NLP processing
-    
-    Workflow:
-    1. User input (any language) → English
-    2. NLP processing in English
-    3. Response generation in English
-    4. English → User's language
-    
-    FIXED: Better handling of symptom keywords during translation
-    """
+    """Enhanced multilingual processor with better symptom handling"""
     
     def __init__(self):
         self.translator = bidirectional_translator
@@ -69,120 +47,133 @@ class MultilingualNLPProcessor:
             'language': 'en'
         }
         
-        # Symptom keyword mapping for better translation
-        self.symptom_keywords_mapping = {
-            # Hindi
-            'पीला': 'yellow', 'पीली': 'yellow', 'भूरा': 'brown', 'काला': 'black',
-            'सफेद': 'white', 'धब्बे': 'spots', 'मुरझाना': 'wilting', 'सड़न': 'rot',
-            'फफूंद': 'mold', 'जंग': 'rust', 'पाउडर': 'powdery',
-            # Tamil
-            'மஞ்சள்': 'yellow', 'பழுப்பு': 'brown', 'கருப்பு': 'black', 'வெள்ளை': 'white',
-            'புள்ளிகள்': 'spots', 'வாடுதல்': 'wilting', 'அழுகல்': 'rot', 'பூஞ்சை': 'mold',
-            'துரு': 'rust', 'தூள்': 'powdery', 'இலை': 'leaf',
-            # Telugu
-            'పసుపు': 'yellow', 'గోధుమ': 'brown', 'నలుపు': 'black', 'తెలుపు': 'white',
-            'మచ్చలు': 'spots', 'విల్టింగ్': 'wilting', 'కుళ్ళు': 'rot', 'ఫంగస్': 'mold',
-            'తుప్పు': 'rust', 'పొడి': 'powdery', 'ఆకు': 'leaf',
-            # Malayalam
-            'മഞ്ഞ': 'yellow', 'തവിട്ട്': 'brown', 'കറുപ്പ്': 'black', 'വെള്ള': 'white',
-            'പാടുകൾ': 'spots', 'വാടൽ': 'wilting', 'ചീയൽ': 'rot', 'പൂപ്പൽ': 'mold',
-            'തുരുമ്പ്': 'rust', 'പൊടി': 'powdery', 'ഇല': 'leaf'
+        # Enhanced symptom keyword mapping for all languages
+        self.symptom_mappings = {
+            # Color symptoms
+            'पीला': 'yellow', 'पीली': 'yellow',
+            'மஞ்சள்': 'yellow',
+            'పసుపు': 'yellow',
+            'മഞ്ഞ': 'yellow',
+            
+            'भूरा': 'brown', 'भूरी': 'brown',
+            'பழுப்பு': 'brown',
+            'గోధుమ': 'brown',
+            'തവിട്ടു': 'brown',
+            
+            'काला': 'black', 'काली': 'black',
+            'கருப்பு': 'black',
+            'నల్పు': 'black',
+            'കറുപ്പു': 'black',
+            
+            'सफेद': 'white', 'सफेदी': 'white',
+            'வெள்ளை': 'white',
+            'తెలుపు': 'white',
+            'വെള്ള': 'white',
+            
+            # Surface symptoms
+            'धब्बे': 'spots', 'धब्बा': 'spots',
+            'புள்ளிகள்': 'spots',
+            'మచ్చలు': 'spots',
+            'പാടുകൾ': 'spots',
+            
+            # Condition symptoms
+            'मुरझाना': 'wilting', 'मुरझा': 'wilting',
+            'வாடுதல்': 'wilting',
+            'విల్టింగ్': 'wilting',
+            'വാടൽ': 'wilting',
+            
+            'सड़न': 'rot', 'सड़ना': 'rot',
+            'அழுகல்': 'rot',
+            'కుళ్ళు': 'rot',
+            'ചീയൽ': 'rot',
+            
+            'फफूंद': 'mold', 'फंगस': 'mold',
+            'பூஞ்சை': 'mold',
+            'ఫంగస్': 'mold',
+            'പൂപ്പൽ': 'mold',
+            
+            'जंग': 'rust',
+            'துரு': 'rust',
+            'తుప్పు': 'rust',
+            'തുരുമ്പു': 'rust',
+            
+            'पाउडर': 'powdery', 'चूर्ण': 'powdery',
+            'தூள்': 'powdery',
+            'పొడి': 'powdery',
+            'പൊടി': 'powdery',
+            
+            # Plant parts
+            'पत्ती': 'leaf', 'पत्तियां': 'leaves', 'पत्ते': 'leaves',
+            'இலை': 'leaf', 'இலைகள்': 'leaves',
+            'ఆకు': 'leaf', 'ఆకులు': 'leaves',
+            'ഇല': 'leaf', 'ഇലകൾ': 'leaves'
         }
     
-    def enhance_translation_for_symptoms(self, text, translated_text, user_lang):
-        """
-        Enhance translated text by ensuring symptom keywords are preserved
-        
-        Args:
-            text: Original text in user's language
-            translated_text: Machine-translated English text
-            user_lang: User's language code
-        
-        Returns:
-            Enhanced English text with symptom keywords
-        """
+    def enhance_translation(self, original_text, translated_text, user_lang):
+        """Enhanced translation with explicit symptom preservation"""
         if user_lang == 'en':
             return translated_text
         
-        # Add explicit symptom keywords if found in original
-        enhanced = translated_text
+        # Find symptom keywords in original text
         found_symptoms = []
+        text_lower = original_text.lower()
         
-        for native_word, english_word in self.symptom_keywords_mapping.items():
-            if native_word in text:
-                # Check if English equivalent is missing
-                if english_word not in enhanced.lower():
+        for native_word, english_word in self.symptom_mappings.items():
+            if native_word in text_lower:
+                # Check if English equivalent is in translation
+                if english_word not in translated_text.lower():
                     found_symptoms.append(english_word)
         
-        # Append found symptoms to enhance translation
+        # Enhance translation if symptoms found
         if found_symptoms:
-            enhanced = f"{enhanced} (showing: {', '.join(found_symptoms)})"
-            print(f"[TRANSLATION ENHANCEMENT] Added symptom keywords: {found_symptoms}")
+            # Remove duplicates
+            found_symptoms = list(set(found_symptoms))
+            enhanced = f"{translated_text} showing {' and '.join(found_symptoms)}"
+            print(f"[TRANSLATION+] Added symptoms: {found_symptoms}")
+            return enhanced
         
-        return enhanced
+        return translated_text
     
     def process_user_message(self, user_message, explicit_lang=None, image_prediction=None, context_disease=None):
-        """
-        Complete multilingual processing pipeline
-        
-        Args:
-            user_message: User's input text (any supported language)
-            explicit_lang: Explicitly specified language (optional)
-            image_prediction: Dict with disease_key and confidence (if image was uploaded)
-            context_disease: Current disease context from session (optional)
-        
-        Returns:
-            Dict with response, language, and context
-        """
+        """Complete multilingual processing pipeline"""
         try:
-            # Step 1: Detect or use explicit language
-            if explicit_lang:
-                user_lang = explicit_lang
-            else:
-                user_lang = detect_lang(user_message)
-            
+            # Detect or use explicit language
+            user_lang = explicit_lang or detect_lang(user_message)
             self.current_user_language = user_lang
             self.conversation_context['language'] = user_lang
             
-            # Step 2: Translate to English
+            # Translate to English
             english_text = to_english(user_message, user_lang)
             
-            # Step 2.5: Enhance translation with symptom keywords (FIXED)
-            english_text = self.enhance_translation_for_symptoms(user_message, english_text, user_lang)
+            # Enhance with symptom keywords
+            english_text = self.enhance_translation(user_message, english_text, user_lang)
             
-            print(f"[NLP] Original ({user_lang}): {user_message}")
-            print(f"[NLP] Enhanced English: {english_text}")
-            print(f"[NLP] Current context disease: {self.conversation_context.get('disease')}")
+            print(f"[MLNLP] Original ({user_lang}): {user_message}")
+            print(f"[MLNLP] Enhanced EN: {english_text}")
+            print(f"[MLNLP] Context: {self.conversation_context.get('disease')}")
             
-            # Step 3: Process with NLP engine
+            # Process with NLP
             if image_prediction:
-                # Image-based prediction - NEW disease context
                 disease_key = image_prediction.get('disease_key', '')
                 confidence = image_prediction.get('confidence', 0.0)
                 
-                print(f"[NLP] Processing IMAGE prediction: {disease_key}")
-                
                 english_response = self.nlp.process_image_prediction(disease_key, confidence)
                 self.conversation_context['disease'] = disease_key
-            
             else:
-                # Use provided context_disease or fall back to conversation context
                 context_disease = context_disease or self.conversation_context.get('disease')
-                self.conversation_context['disease'] = context_disease  # Update context
                 
-                print(f"[NLP] Processing TEXT query with context: {context_disease}")
-                
+                # Process text query
                 english_response = self.nlp.process_text_query(english_text, context_disease)
                 
-                # Update context with new disease if detected
+                # Update context if disease detected
                 new_disease = self.nlp.memory.last_disease
                 if new_disease:
-                    print(f"[NLP] New disease detected: {new_disease}")
+                    print(f"[MLNLP] Disease updated: {new_disease}")
                     self.conversation_context['disease'] = new_disease
             
-            print(f"[NLP] English response: {english_response[:100]}...")
+            print(f"[MLNLP] EN Response: {english_response[:100]}...")
             
-            # Step 4: Translate response back to user's language
+            # Translate response back
             translated_response = from_english(english_response, user_lang)
             
             return {
@@ -195,39 +186,25 @@ class MultilingualNLPProcessor:
             }
         
         except Exception as e:
-            error_msg = f"Error processing message: {str(e)}"
-            print(error_msg)
+            print(f"[MLNLP ERROR] {e}")
             import traceback
             traceback.print_exc()
             
             return {
-                'response': "Sorry, I encountered an error processing your request.",
+                'response': "Sorry, I encountered an error. Please try again.",
                 'language': self.current_user_language or 'en',
-                'error': error_msg,
+                'error': str(e),
                 'status': 'error'
             }
     
     def process_image_result(self, disease_key, confidence, user_lang='en'):
-        """
-        Process image prediction and generate multilingual response
-        
-        Args:
-            disease_key: Predicted disease key
-            confidence: Prediction confidence
-            user_lang: User's language
-        
-        Returns:
-            Translated response dict
-        """
+        """Process image prediction"""
         try:
             self.current_user_language = user_lang
             self.conversation_context['disease'] = disease_key
             self.conversation_context['language'] = user_lang
             
-            # Generate response in English
             english_response = self.nlp.process_image_prediction(disease_key, confidence)
-            
-            # Translate to user's language
             translated_response = from_english(english_response, user_lang)
             
             return {
@@ -239,18 +216,16 @@ class MultilingualNLPProcessor:
             }
         
         except Exception as e:
-            error_msg = f"Error processing image result: {str(e)}"
-            print(error_msg)
-            
+            print(f"[MLNLP ERROR] Image: {e}")
             return {
                 'response': "Sorry, I encountered an error.",
                 'language': user_lang,
-                'error': error_msg,
+                'error': str(e),
                 'status': 'error'
             }
     
     def reset_conversation(self):
-        """Reset conversation context"""
+        """Reset conversation"""
         self.nlp.reset_conversation()
         self.conversation_context = {
             'disease': None,
@@ -258,22 +233,22 @@ class MultilingualNLPProcessor:
         }
     
     def set_language(self, lang_code):
-        """Set user's preferred language"""
+        """Set preferred language"""
         self.current_user_language = lang_code
         self.conversation_context['language'] = lang_code
     
     def get_context(self):
-        """Get current conversation context"""
+        """Get conversation context"""
         return self.conversation_context
 
 
-# Global processor instance
+# Global instance
 multilingual_processor = MultilingualNLPProcessor()
 
 
 # Convenience functions
 def process_message(user_message, lang=None, image_prediction=None, context_disease=None):
-    """Process user message with automatic translation"""
+    """Process user message"""
     return multilingual_processor.process_user_message(
         user_message=user_message,
         explicit_lang=lang,
@@ -283,7 +258,7 @@ def process_message(user_message, lang=None, image_prediction=None, context_dise
 
 
 def process_image(disease_key, confidence, lang='en'):
-    """Process image prediction result"""
+    """Process image prediction"""
     return multilingual_processor.process_image_result(disease_key, confidence, lang)
 
 
@@ -293,78 +268,58 @@ def reset():
 
 
 # Test function
-def test_multilingual_nlp():
-    """Test the multilingual NLP system"""
-    
-    print("=" * 60)
-    print("TESTING MULTILINGUAL NLP SYSTEM")
-    print("=" * 60)
+def test_system():
+    """Test enhanced NLP system"""
+    print("\n" + "="*60)
+    print("TESTING ENHANCED TEXT-BASED DISEASE DETECTION")
+    print("="*60)
     
     test_cases = [
         {
-            'message': 'Hello, how can you help me?',
+            'text': 'My tomato plant has yellow leaves with brown spots',
             'lang': 'en',
-            'description': 'English greeting'
+            'expected': 'early_blight or septoria'
         },
         {
-            'message': 'My tomato plant has yellow leaves with brown spots',
+            'text': 'Tomato leaves are curling and turning yellow',
             'lang': 'en',
-            'description': 'English symptom description'
+            'expected': 'yellow_leaf_curl_virus'
         },
         {
-            'message': 'टमाटर के पत्तों पर भूरे धब्बे हैं और पत्तियाँ पीली हो रही हैं',
+            'text': 'White powdery coating on leaves',
+            'lang': 'en',
+            'expected': 'powdery_mildew'
+        },
+        {
+            'text': 'टमाटर के पत्तों पर भूरे धब्बे हैं और पत्तियां पीली हो रही हैं',
             'lang': 'hi',
-            'description': 'Hindi symptom description'
+            'expected': 'early_blight'
         },
         {
-            'message': 'தக்காளி இலைகளில் பழுப்பு புள்ளிகள் மற்றும் மஞ்சள் நிறம்',
+            'text': 'தக்காளி இலைகளில் பழுப்பு புள்ளிகள் மற்றும் மஞ்சள் நிறம்',
             'lang': 'ta',
-            'description': 'Tamil symptom description'
-        },
-        {
-            'message': 'టమాటో ఆకులపై గోధుమ మచ్చలు మరియు పసుపు రంగు',
-            'lang': 'te',
-            'description': 'Telugu symptom description'
-        },
-        {
-            'message': 'തക്കാളി ഇലകളിൽ തവിട്ട് പാടുകളും മഞ്ഞ നിറവും',
-            'lang': 'ml',
-            'description': 'Malayalam symptom description'
+            'expected': 'early_blight'
         }
     ]
     
     for i, test in enumerate(test_cases, 1):
-        print(f"\n--- Test {i}: {test['description']} ---")
-        print(f"Input ({test['lang']}): {test['message']}")
+        print(f"\n--- Test {i} ---")
+        print(f"Input ({test['lang']}): {test['text']}")
+        print(f"Expected: {test['expected']}")
         
-        result = process_message(test['message'], test['lang'])
+        result = process_message(test['text'], test['lang'])
         
-        print(f"Detected Language: {result.get('language', 'N/A')}")
-        print(f"English Translation: {result.get('english_text', 'N/A')}")
-        print(f"Response ({result.get('language', 'N/A')}): {result.get('response', 'N/A')[:100]}...")
-        print(f"Status: {result.get('status', 'N/A')}")
+        print(f"Status: {result.get('status')}")
+        print(f"English: {result.get('english_text', 'N/A')}")
+        print(f"Response: {result.get('response', 'N/A')[:150]}...")
+        
+        if 'context' in result and result['context'].get('disease'):
+            print(f"✓ Detected disease: {result['context']['disease']}")
+        else:
+            print("✗ No disease detected")
     
-    print("\n" + "=" * 60)
-    print("Testing image prediction integration")
-    print("=" * 60)
-    
-    # Test image prediction
-    image_result = process_image('tomato_early_blight', 95.5, 'hi')
-    print(f"\nImage Prediction (Hindi):")
-    print(f"Response: {image_result.get('response', 'N/A')[:100]}...")
-    
-    # Test follow-up question in Hindi
-    followup_result = process_message('इसका इलाज क्या है?', 'hi')
-    print(f"\nFollow-up Question (Hindi - 'What is the treatment?'):")
-    print(f"Response: {followup_result.get('response', 'N/A')[:100]}...")
-    
-    # Test severity question in English
-    severity_result = process_message('Is this serious?', 'en')
-    print(f"\nSeverity Question (English):")
-    print(f"Response: {severity_result.get('response', 'N/A')[:100]}...")
-    
-    print("\n" + "=" * 60)
+    print("\n" + "="*60)
 
 
 if __name__ == '__main__':
-    test_multilingual_nlp()
+    test_system()

@@ -12,3 +12,5 @@ opencv-python==4.8.0.76
 werkzeug==3.0.0
 torch==2.1.0
 torchvision==0.16.0
+
+# Note: Voice input now uses browser Web Speech API (no server dependencies needed)

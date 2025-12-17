@@ -1,12 +1,11 @@
 """
-Enhanced Flask App with Custom NLP and Multilingual Support
-No pretrained NLP models - Pure custom implementation
+Enhanced Flask App with User Authentication
+Voice input handled by browser Web Speech API
 """
 
 import os
 import sys
 
-# Add current directory to Python path to ensure imports work
 current_dir = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, current_dir)
 
@@ -22,12 +21,8 @@ from werkzeug.utils import secure_filename
 # Import configuration
 from config import MODEL_PATH, CLASS_NAMES_PATH, UPLOAD_FOLDER, ALLOWED_EXTENSIONS, IMG_SIZE, NUM_CLASSES
 
-# Demo user configuration
-DEMO_USER = {
-    'id': 1,
-    'name': 'Demo User',
-    'email': 'demo@example.com'
-}
+# Import database
+from database import db, create_user, authenticate_user, get_user
 
 # Add model directory to path
 sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'model'))
@@ -42,13 +37,13 @@ app = Flask(
     static_folder=os.path.join(os.path.dirname(__file__), '..', 'static')
 )
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
-app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16MB max file size
-app.secret_key = 'your-secret-key-for-sessions'
+app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16MB max
+app.secret_key = os.getenv('SECRET_KEY', 'your-secret-key-change-in-production')
 
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
 # --- MODEL LOADING ---
-print(" Loading PyTorch model...")
+print("⏳ Loading PyTorch model...")
 model = None
 device = None
 class_names = []
@@ -70,11 +65,11 @@ try:
     with open(class_names_path, 'r') as f:
         class_names = json.load(f)
     
-    print(f" Model loaded successfully! Device: {device}")
+    print(f"✅ Model loaded successfully! Device: {device}")
     print(f"Number of classes: {len(class_names)}")
     
 except Exception as e:
-    print(f" Error loading model: {str(e)}")
+    print(f"❌ Error loading model: {str(e)}")
     class_names = []
 
 # Login required decorator
@@ -96,84 +91,109 @@ def index():
     """Render main page"""
     if 'user_id' not in session:
         return redirect(url_for('login'))
-    # Initialize session
+    
+    # Get user info
+    user_id = session.get('user_id')
+    user_info = get_user(user_id)
+    
     if 'user_language' not in session:
-        session['user_language'] = 'en'
+        session['user_language'] = user_info.get('preferred_language', 'en')
     if 'conversation_context' not in session:
         session['conversation_context'] = {'disease': None}
     
-    return render_template('index.html')
-
-@app.route('/demo-login', methods=['POST'])
-def demo_login():
-    """Handle demo user login"""
-    # Set demo user data in session
-    session['user_id'] = DEMO_USER['id']
-    session['user_name'] = 'Demo User'
-    
-    return jsonify({
-        'success': True,
-        'message': 'Demo login successful',
-        'user': {'name': 'Demo User'}
-    })
+    return render_template('index.html', user=user_info)
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
-    """Handle user login (demo mode)"""
+    """Handle user login"""
     if request.method == 'GET':
         return render_template('login.html')
-        
-    # In demo mode, any non-empty credentials will work
-    email = request.json.get('email', '').strip()
-    if not email:
-        return jsonify({'success': False, 'error': 'Email is required'}), 400
-        
-    # Set demo user data in session
-    session['user_id'] = DEMO_USER['id']
-    session['user_name'] = email.split('@')[0]  # Use the part before @ as username
     
-    return jsonify({
-        'success': True, 
-        'message': 'Login successful',
-        'user': {'name': session['user_name']}
-    })
+    data = request.get_json()
+    email = data.get('email', '').strip()
+    password = data.get('password', '').strip()
+    
+    if not email or not password:
+        return jsonify({
+            'success': False,
+            'error': 'Email and password are required'
+        }), 400
+    
+    # Authenticate user
+    auth_result = authenticate_user(email, password)
+    
+    if auth_result['success']:
+        session['user_id'] = auth_result['user_id']
+        session['user_name'] = auth_result['name']
+        session['user_email'] = auth_result['email']
+        session['user_language'] = auth_result.get('preferred_language', 'en')
+        
+        return jsonify({
+            'success': True,
+            'message': 'Login successful',
+            'user': {
+                'name': auth_result['name'],
+                'email': auth_result['email']
+            }
+        })
+    else:
+        return jsonify({
+            'success': False,
+            'error': auth_result.get('error', 'Authentication failed')
+        }), 401
 
 @app.route('/register', methods=['POST'])
 def register():
-    """Handle new user registration (demo mode)"""
-    name = request.json.get('name', '').strip()
-    email = request.json.get('email', '').strip()
+    """Handle new user registration"""
+    data = request.get_json()
+    name = data.get('name', '').strip()
+    email = data.get('email', '').strip()
+    password = data.get('password', '').strip()
     
-    if not email:
-        return jsonify({'success': False, 'error': 'Email is required'}), 400
+    if not name or not email or not password:
+        return jsonify({
+            'success': False,
+            'error': 'All fields are required'
+        }), 400
     
-    # In demo mode, just set the username from email if name not provided
-    username = name if name else email.split('@')[0]
+    if len(password) < 6:
+        return jsonify({
+            'success': False,
+            'error': 'Password must be at least 6 characters'
+        }), 400
     
-    # Set demo user data in session
-    session['user_id'] = DEMO_USER['id']
-    session['user_name'] = username
+    # Create user
+    result = create_user(name, email, password)
     
-    return jsonify({
-        'success': True, 
-        'message': 'Registration successful!',
-        'user': {'name': username}
-    })
+    if result['success']:
+        session['user_id'] = result['user_id']
+        session['user_name'] = result['name']
+        session['user_email'] = result['email']
+        
+        return jsonify({
+            'success': True,
+            'message': 'Registration successful',
+            'user': {
+                'name': result['name'],
+                'email': result['email']
+            }
+        })
+    else:
+        return jsonify({
+            'success': False,
+            'error': result.get('error', 'Registration failed')
+        }), 400
 
 @app.route('/logout')
 def logout():
     """Handle user logout"""
-    session.pop('user_id', None)
-    session.pop('user_name', None)
+    session.clear()
     return redirect(url_for('login'))
 
 @app.route('/chat', methods=['POST'])
 @login_required
 def chat():
-    """
-    Handle chat messages with multilingual NLP
-    Automatic translation and intent processing
-    """
+    """Handle chat messages with multilingual NLP"""
     try:
         data = request.get_json()
         if not data or 'message' not in data:
@@ -199,14 +219,12 @@ def chat():
         context = session.get('conversation_context', {})
         context_disease = context.get('disease')
         
-        print(f"[CHAT] Session context disease: {context_disease}")
-        
         # Process the message with context
         result = process_message(
             user_message=user_message,
             lang=explicit_lang,
-            image_prediction=None,  # Never pass image prediction for text queries
-            context_disease=context_disease  # Pass the current disease context
+            image_prediction=None,
+            context_disease=context_disease
         )
         
         if result.get('status') == 'error':
@@ -221,13 +239,15 @@ def chat():
         if 'disease' in result.get('context', {}):
             session['conversation_context']['disease'] = result['context']['disease']
         
+        # Update user language preference in database
+        user_id = session.get('user_id')
+        db.update_user_language(user_id, result.get('language', 'en'))
+        
         response = {
             'response': result.get('response', 'No response generated'),
             'language': result.get('language', 'en'),
             'status': 'success'
         }
-        
-        print(f"[CHAT] Response: {response['response'][:100]}...")
         
         return jsonify(response)
     
@@ -240,12 +260,11 @@ def chat():
             'response': 'Sorry, I encountered an error. Please try again.'
         }), 500
 
+
 @app.route('/predict', methods=['POST'])
 @login_required
 def predict():
-    """
-    Handle image prediction with multilingual response
-    """
+    """Handle image prediction with multilingual response"""
     try:
         print("[PREDICT] Received prediction request")
         
@@ -265,11 +284,7 @@ def predict():
         os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
         filename = secure_filename(file.filename)
         filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
-        print(f"[PREDICT] Saving file to: {filepath}")
         file.save(filepath)
-        
-        if not os.path.exists(filepath):
-            return jsonify({'error': 'Failed to save uploaded file'}), 500
         
         # Image preprocessing
         transform = transforms.Compose([
@@ -329,6 +344,7 @@ def predict():
         traceback.print_exc()
         return jsonify({'error': str(e)}), 500
 
+
 @app.route('/reset', methods=['POST'])
 @login_required
 def reset_conversation():
@@ -363,6 +379,10 @@ def set_language():
         session['user_language'] = lang
         multilingual_processor.set_language(lang)
         
+        # Update in database
+        user_id = session.get('user_id')
+        db.update_user_language(user_id, lang)
+        
         return jsonify({
             'status': 'success',
             'language': lang
@@ -384,41 +404,31 @@ def health():
         'num_classes': len(class_names),
         'device': str(device) if device else None,
         'supported_languages': ['en', 'hi', 'ta', 'te', 'ml'],
+        'voice_available': True,  # Web Speech API in browser
         'nlp_engine': 'custom',
         'translation': 'enabled',
         'features': {
             'image_detection': True,
             'text_detection': True,
+            'voice_detection': True,  # Handled by browser Web Speech API
             'multilingual': True,
-            'conversation_memory': True
+            'conversation_memory': True,
+            'user_authentication': True
         }
-    })
-
-@app.route('/languages')
-@login_required
-def supported_languages():
-    """Return list of supported languages"""
-    return jsonify({
-        'languages': {
-            'en': 'English',
-            'hi': 'Hindi',
-            'ta': 'Tamil',
-            'te': 'Telugu',
-            'ml': 'Malayalam'
-        },
-        'status': 'success'
     })
 
 
 if __name__ == '__main__':
     print("\n" + "="*60)
-    print("🚀 Starting AgroBot with Custom NLP System")
+    print("🚀 Starting AgroBot with Voice Support")
     print("="*60)
     print("✅ Features:")
     print("   - Custom NLP (No pretrained models)")
     print("   - Image-based disease detection")
     print("   - Text-based disease identification")
+    print("   - Voice-based disease classification 🎤")
     print("   - Multilingual support (5 languages)")
+    print("   - User authentication & credential storage")
     print("   - Conversation memory")
     print("="*60 + "\n")
     

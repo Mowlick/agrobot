@@ -1,14 +1,140 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>🌱 AgroBot Universal - Agricultural Assistant</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <style>
+        /* Voice Button Styles */
+        .chat-input-container {
+            position: relative;
+        }
+
+        .voice-btn {
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #5c6bc0, #7e57c2);
+            color: white;
+            border: none;
+            cursor: pointer;
+            font-size: 1.3em;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 12px rgba(92, 107, 192, 0.3);
+            flex-shrink: 0;
+        }
+
+        .voice-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(92, 107, 192, 0.4);
+        }
+
+        .voice-btn.recording {
+            background: linear-gradient(135deg, #f44336, #e91e63);
+            animation: pulse 1.5s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+
+            0%,
+            100% {
+                transform: scale(1);
+                box-shadow: 0 4px 12px rgba(244, 67, 54, 0.3);
+            }
+
+            50% {
+                transform: scale(1.05);
+                box-shadow: 0 6px 20px rgba(244, 67, 54, 0.5);
+            }
+        }
+
+        .voice-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .voice-indicator {
+            display: none;
+            position: absolute;
+            top: -35px;
+            right: 0;
+            background: #f44336;
+            color: white;
+            padding: 5px 12px;
+            border-radius: 15px;
+            font-size: 0.85em;
+            font-weight: 600;
+            animation: fadeIn 0.3s ease;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .voice-tutorial {
+            animation: slideUp 0.3s ease;
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .tutorial-content {
+            text-align: center;
+        }
+
+        .tutorial-content h4 {
+            margin: 0 0 10px 0;
+            color: #1f7a4d;
+        }
+
+        .tutorial-content p {
+            margin: 8px 0;
+            color: #666;
+            font-size: 0.9em;
+        }
+
+        .tutorial-content button {
+            margin-top: 12px;
+            padding: 8px 20px;
+            background: #25a05a;
+            color: white;
+            border: none;
+            border-radius: 20px;
+            cursor: pointer;
+            font-weight: 600;
+        }
+
+        .tutorial-content button:hover {
+            background: #1f7a4d;
+        }
+    </style>
 </head>
+
 <body>
     <div class="container">
-        <!-- Header with Improved Language Selector -->
+        <!-- Header with Language Selector -->
         <header class="header">
             <div class="header-content">
                 <h1 id="main-title">🚜 AgroBot Universal</h1>
@@ -17,9 +143,9 @@
             <div class="language-selector-wrapper">
                 <div class="user-profile" onclick="showProfileMenu()">
                     <div class="user-avatar">👤</div>
-                    <span class="user-name">User</span>
+                    <span class="user-name">{{ user.get('name', 'User') }}</span>
                 </div>
-                
+
                 <div class="language-toggle">
                     <button class="lang-dropdown-btn" id="lang-dropdown-btn" onclick="toggleLanguageDropdown()">
                         <span id="current-lang-display">English</span>
@@ -53,7 +179,7 @@
                 <div class="panel-header">
                     <h2 id="detection-title">🔍 Plant Disease Detection</h2>
                 </div>
-                
+
                 <!-- Upload Section -->
                 <div class="upload-section">
                     <div class="upload-area" id="upload-area">
@@ -98,7 +224,7 @@
                 </button>
             </div>
 
-            <!-- Right Panel - Chatbot (Simplified - No Translation Dropdown) -->
+            <!-- Right Panel - Chatbot with Voice Input -->
             <div class="right-panel">
                 <div class="panel-header">
                     <h2 id="chat-title">💬 Ask Me Anything</h2>
@@ -109,20 +235,20 @@
                         <!-- Welcome message -->
                         <div class="message bot-message">
                             <div class="message-content" id="welcome-message">
-                                Hello! I'm your agricultural assistant. Ask me about crop diseases, pests, or farming practices. You can also upload a plant image for disease detection!
+                                Hello! I'm your agricultural assistant. Ask me about crop diseases, pests, or farming
+                                practices. You can also upload a plant image or use voice input for disease detection!
                             </div>
                         </div>
                     </div>
 
-                    <!-- Simplified Chat Input (No Translation Dropdown) -->
+                    <!-- Chat Input with Voice Button -->
                     <div class="chat-input-container">
-                        <input 
-                            type="text" 
-                            id="chat-input" 
-                            class="chat-input"
-                            placeholder="Type your question here..."
-                            autocomplete="off"
-                        >
+                        <div class="voice-indicator" id="voice-indicator"></div>
+                        <input type="text" id="chat-input" class="chat-input" placeholder="Type your question here..."
+                            autocomplete="off">
+                        <button class="voice-btn" id="voice-btn" title="Voice Input">
+                            <span>🎤</span>
+                        </button>
                         <button class="btn-send" id="send-btn">
                             <span>➤</span>
                         </button>
@@ -133,10 +259,12 @@
 
         <!-- Footer -->
         <footer class="footer">
-            <p id="footer-text">🌾 AgroBot Universal | Powered by Custom CNN & NLP | Multilingual Support</p>
+            <p id="footer-text">🌾 AgroBot Universal | Powered by Custom CNN & NLP | Voice Input Enabled 🎤</p>
         </footer>
     </div>
 
     <script src="{{ url_for('static', filename='js/script.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/voice.js') }}"></script>
 </body>
+
 </html>

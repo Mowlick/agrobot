@@ -119,35 +119,35 @@ const chatMessages = document.getElementById('chat-messages');
 function toggleLanguageDropdown() {
     const dropdown = document.getElementById('lang-dropdown');
     const button = document.getElementById('lang-dropdown-btn');
-    
+
     dropdown.classList.toggle('show');
     button.classList.toggle('open');
 }
 
 function changeLanguage(langCode, langName) {
     currentLanguage = langCode;
-    
+
     // Update display button
     document.getElementById('current-lang-display').textContent = languageDisplayNames[langCode];
-    
+
     // Remove active class from all options
     document.querySelectorAll('.lang-option').forEach(opt => {
         opt.classList.remove('active');
     });
-    
+
     // Add active class to selected option
     const selectedOption = document.querySelector(`.lang-option[data-lang="${langCode}"]`);
     if (selectedOption) {
         selectedOption.classList.add('active');
     }
-    
+
     // Close dropdown
     document.getElementById('lang-dropdown').classList.remove('show');
     document.getElementById('lang-dropdown-btn').classList.remove('open');
-    
+
     // Update UI language
     updateUILanguage();
-    
+
     // Send to backend
     fetch('/set_language', {
         method: 'POST',
@@ -156,16 +156,16 @@ function changeLanguage(langCode, langName) {
         },
         body: JSON.stringify({ language: langCode })
     })
-    .catch(error => console.error('Error setting language:', error));
+        .catch(error => console.error('Error setting language:', error));
 }
 
 // Close dropdown when clicking outside
-document.addEventListener('click', function(event) {
+document.addEventListener('click', function (event) {
     const dropdown = document.getElementById('lang-dropdown');
     const button = document.getElementById('lang-dropdown-btn');
-    
-    if (dropdown && button && 
-        !dropdown.contains(event.target) && 
+
+    if (dropdown && button &&
+        !dropdown.contains(event.target) &&
         !button.contains(event.target)) {
         dropdown.classList.remove('show');
         button.classList.remove('open');
@@ -180,7 +180,7 @@ function showProfileMenu() {
 // Update UI language
 function updateUILanguage() {
     const t = translations[currentLanguage] || translations.en;
-    
+
     document.getElementById('main-title').textContent = t.mainTitle;
     document.getElementById('main-subtitle').textContent = t.mainSubtitle;
     document.getElementById('detection-title').textContent = t.detectionTitle;
@@ -228,14 +228,14 @@ fileInput.addEventListener('change', (e) => {
 // Handle file selection
 function handleFileSelect(file) {
     const validTypes = ['image/jpeg', 'image/jpg', 'image/png'];
-    
+
     if (!validTypes.includes(file.type)) {
         alert('Please upload a valid image (JPG, PNG, JPEG)');
         return;
     }
-    
+
     selectedFile = file;
-    
+
     // Show preview
     const reader = new FileReader();
     reader.onload = (e) => {
@@ -261,34 +261,34 @@ clearBtn.addEventListener('click', () => {
 // Analyze button
 analyzeBtn.addEventListener('click', async () => {
     if (!selectedFile) return;
-    
+
     const t = translations[currentLanguage] || translations.en;
     analyzeBtn.disabled = true;
     analyzeBtn.innerHTML = '<span class="loading"></span> Analyzing...';
-    
+
     const formData = new FormData();
     formData.append('file', selectedFile);
     formData.append('lang', currentLanguage);
-    
+
     try {
         const response = await fetch('/predict', {
             method: 'POST',
             body: formData
         });
-        
+
         const data = await response.json();
-        
+
         if (data.error) {
             alert(data.error);
             return;
         }
-        
+
         // Display results
         displayResults(data);
-        
+
         // Store context for chat
         lastPredictionContext = `disease=${data.original_disease}, confidence=${data.confidence_text}`;
-        
+
     } catch (error) {
         console.error('Error:', error);
         alert('Failed to analyze image. Please try again.');
@@ -298,19 +298,28 @@ analyzeBtn.addEventListener('click', async () => {
     }
 });
 
+// Simple markdown parser for bold text
+function parseMarkdown(text) {
+    // Replace **bold** with <strong>bold</strong>
+    return text.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+}
+
 // Display prediction results
 function displayResults(data) {
     const t = translations[currentLanguage] || translations.en;
-    
+
     document.getElementById('result-title').textContent = t.resultTitle;
     document.getElementById('disease-label').textContent = t.diseaseLabel;
     document.getElementById('confidence-label').textContent = t.confidenceLabel;
     document.getElementById('treatment-label').textContent = t.treatmentLabel;
-    
+
     document.getElementById('disease-value').textContent = data.disease;
     document.getElementById('confidence-value').textContent = data.confidence_text;
-    document.getElementById('treatment-value').textContent = data.treatment;
-    
+
+    // Parse markdown in treatment text and set as HTML
+    const treatmentElement = document.getElementById('treatment-value');
+    treatmentElement.innerHTML = parseMarkdown(data.treatment || 'No treatment information available');
+
     resultsSection.style.display = 'block';
 }
 
@@ -323,14 +332,14 @@ chatInput.addEventListener('keypress', (e) => {
 async function sendMessage() {
     const message = chatInput.value.trim();
     if (!message) return;
-    
+
     // Add user message
     addMessage(message, 'user');
     chatInput.value = '';
-    
+
     // Show typing indicator
     const typingDiv = addMessage('Typing...', 'bot', true);
-    
+
     try {
         const response = await fetch('/chat', {
             method: 'POST',
@@ -343,18 +352,18 @@ async function sendMessage() {
                 context: lastPredictionContext
             })
         });
-        
+
         const data = await response.json();
-        
+
         // Remove typing indicator
         typingDiv.remove();
-        
+
         if (data.error) {
             addMessage(data.error, 'bot');
         } else {
             addMessage(data.response, 'bot');
         }
-        
+
     } catch (error) {
         console.error('Chat error:', error);
         typingDiv.remove();
@@ -362,22 +371,30 @@ async function sendMessage() {
     }
 }
 
+// Simple markdown parser for bold text
+function parseMarkdown(text) {
+    // Replace **bold** with <strong>bold</strong>
+    return text.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+}
+
 function addMessage(text, sender, isTyping = false) {
     const messageDiv = document.createElement('div');
     messageDiv.className = `message ${sender}-message`;
-    
+
     const contentDiv = document.createElement('div');
     contentDiv.className = 'message-content';
-    contentDiv.textContent = text;
-    
+
     if (isTyping) {
         contentDiv.innerHTML = '<span class="loading"></span> ' + text;
+    } else {
+        // Parse markdown and set as HTML
+        contentDiv.innerHTML = parseMarkdown(text);
     }
-    
+
     messageDiv.appendChild(contentDiv);
     chatMessages.appendChild(messageDiv);
     chatMessages.scrollTop = chatMessages.scrollHeight;
-    
+
     return messageDiv;
 }
 

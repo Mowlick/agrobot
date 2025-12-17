@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -355,17 +356,20 @@
         }
 
         @keyframes spin {
-            to { transform: rotate(360deg); }
+            to {
+                transform: rotate(360deg);
+            }
         }
     </style>
 </head>
+
 <body>
     <div class="auth-container">
         <!-- Left Panel -->
         <div class="auth-left">
             <h1>🌱 AgroBot</h1>
             <p>Your AI-powered agricultural companion for plant disease detection and farming guidance</p>
-            
+
             <div class="feature-list">
                 <div class="feature-item">AI-based disease detection</div>
                 <div class="feature-item">Multilingual support</div>
@@ -387,13 +391,8 @@
                         <label for="signin-email">Email Address</label>
                         <div class="input-wrapper">
                             <span class="input-icon">📧</span>
-                            <input 
-                                type="email" 
-                                id="signin-email" 
-                                class="form-input" 
-                                placeholder="Enter your email"
-                                required
-                            >
+                            <input type="email" id="signin-email" class="form-input" placeholder="Enter your email"
+                                required>
                         </div>
                         <span class="error-message" id="signin-email-error"></span>
                     </div>
@@ -402,14 +401,10 @@
                         <label for="signin-password">Password</label>
                         <div class="input-wrapper">
                             <span class="input-icon">🔒</span>
-                            <input 
-                                type="password" 
-                                id="signin-password" 
-                                class="form-input" 
-                                placeholder="Enter your password"
-                                required
-                            >
-                            <button type="button" class="password-toggle" onclick="togglePassword('signin-password')">👁️</button>
+                            <input type="password" id="signin-password" class="form-input"
+                                placeholder="Enter your password" required>
+                            <button type="button" class="password-toggle"
+                                onclick="togglePassword('signin-password')">👁️</button>
                         </div>
                         <span class="error-message" id="signin-password-error"></span>
                     </div>
@@ -434,13 +429,8 @@
                         <label for="signup-name">Full Name</label>
                         <div class="input-wrapper">
                             <span class="input-icon">👤</span>
-                            <input 
-                                type="text" 
-                                id="signup-name" 
-                                class="form-input" 
-                                placeholder="Enter your full name"
-                                required
-                            >
+                            <input type="text" id="signup-name" class="form-input" placeholder="Enter your full name"
+                                required>
                         </div>
                         <span class="error-message" id="signup-name-error"></span>
                     </div>
@@ -449,13 +439,8 @@
                         <label for="signup-email">Email Address</label>
                         <div class="input-wrapper">
                             <span class="input-icon">📧</span>
-                            <input 
-                                type="email" 
-                                id="signup-email" 
-                                class="form-input" 
-                                placeholder="Enter your email"
-                                required
-                            >
+                            <input type="email" id="signup-email" class="form-input" placeholder="Enter your email"
+                                required>
                         </div>
                         <span class="error-message" id="signup-email-error"></span>
                     </div>
@@ -464,14 +449,10 @@
                         <label for="signup-password">Password</label>
                         <div class="input-wrapper">
                             <span class="input-icon">🔒</span>
-                            <input 
-                                type="password" 
-                                id="signup-password" 
-                                class="form-input" 
-                                placeholder="Create a password"
-                                required
-                            >
-                            <button type="button" class="password-toggle" onclick="togglePassword('signup-password')">👁️</button>
+                            <input type="password" id="signup-password" class="form-input"
+                                placeholder="Create a password" required>
+                            <button type="button" class="password-toggle"
+                                onclick="togglePassword('signup-password')">👁️</button>
                         </div>
                         <span class="error-message" id="signup-password-error"></span>
                     </div>
@@ -480,14 +461,10 @@
                         <label for="signup-confirm-password">Confirm Password</label>
                         <div class="input-wrapper">
                             <span class="input-icon">🔒</span>
-                            <input 
-                                type="password" 
-                                id="signup-confirm-password" 
-                                class="form-input" 
-                                placeholder="Confirm your password"
-                                required
-                            >
-                            <button type="button" class="password-toggle" onclick="togglePassword('signup-confirm-password')">👁️</button>
+                            <input type="password" id="signup-confirm-password" class="form-input"
+                                placeholder="Confirm your password" required>
+                            <button type="button" class="password-toggle"
+                                onclick="togglePassword('signup-confirm-password')">👁️</button>
                         </div>
                         <span class="error-message" id="signup-confirm-password-error"></span>
                     </div>
@@ -522,7 +499,7 @@
         function togglePassword(inputId) {
             const input = document.getElementById(inputId);
             const button = input.nextElementSibling;
-            
+
             if (input.type === 'password') {
                 input.type = 'text';
                 button.textContent = '🙈';
@@ -544,11 +521,11 @@
         // Sign In Form Submission
         document.getElementById('signin-form-element').addEventListener('submit', async (e) => {
             e.preventDefault();
-            
+
             const email = document.getElementById('signin-email').value;
             const password = document.getElementById('signin-password').value;
             const button = e.target.querySelector('.btn-primary');
-            
+
             // Clear previous errors
             document.querySelectorAll('.error-message').forEach(el => {
                 el.classList.remove('show');
@@ -583,22 +560,23 @@
             button.disabled = true;
 
             try {
-                // Auto-login without checking credentials
+                // Login with email and password
                 const response = await fetch('/login', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ 
+                    body: JSON.stringify({
                         email: email,
-                        name: email.split('@')[0] // Use email prefix as name
+                        password: password
                     })
                 });
 
-                if (response.ok) {
+                const data = await response.json();
+
+                if (response.ok && data.success) {
                     // Redirect to main app
                     window.location.href = '/';
                 } else {
-                    const error = await response.json();
-                    throw new Error(error.message || 'Failed to sign in');
+                    throw new Error(data.error || 'Invalid email or password');
                 }
             } catch (error) {
                 alert('Sign in failed: ' + error.message);
@@ -610,9 +588,9 @@
         // Sign Up Form Submission
         document.getElementById('signup-form-element').addEventListener('submit', async (e) => {
             e.preventDefault();
-            
-            const name = document.getElementById('signup-name').value;
-            const email = document.getElementById('signup-email').value;
+
+            const name = document.getElementById('signup-name').value.trim();
+            const email = document.getElementById('signup-email').value.trim();
             const password = document.getElementById('signup-password').value;
             const confirmPassword = document.getElementById('signup-confirm-password').value;
             const terms = document.getElementById('terms').checked;
@@ -630,7 +608,7 @@
             // Validation
             let hasError = false;
 
-            if (name.trim().length < 2) {
+            if (name.length < 2) {
                 document.getElementById('signup-name').classList.add('error');
                 document.getElementById('signup-name-error').textContent = 'Name must be at least 2 characters';
                 document.getElementById('signup-name-error').classList.add('show');
@@ -671,34 +649,22 @@
             button.disabled = true;
 
             try {
-                // First register the user
+                // Register the user with all required fields
                 const registerResponse = await fetch('/register', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ 
+                    body: JSON.stringify({
                         name: name,
-                        email: email
+                        email: email,
+                        password: password
                     })
                 });
 
                 const registerData = await registerResponse.json();
-                
-                if (registerResponse.ok) {
-                    // If registration is successful, log in
-                    const loginResponse = await fetch('/login', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ email: email })
-                    });
-                    
-                    const loginData = await loginResponse.json();
-                    
-                    if (loginResponse.ok) {
-                        // Redirect to main app
-                        window.location.href = '/';
-                    } else {
-                        throw new Error(loginData.error || 'Failed to log in after registration');
-                    }
+
+                if (registerResponse.ok && registerData.success) {
+                    // Registration successful - redirect to main app
+                    window.location.href = '/';
                 } else {
                     throw new Error(registerData.error || 'Registration failed');
                 }
@@ -710,4 +676,5 @@
         });
     </script>
 </body>
+
 </html>
