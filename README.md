@@ -1,4 +1,4 @@
-# 🌱 AgroBot Universal — AI-based Agricultural Assistant
+# 🌱 AgroBot  — AI-based Agricultural Assistant
 
 An intelligent web application that helps farmers and gardeners identify plant diseases from leaf images using a custom PyTorch CNN model and provides interactive, multilingual agricultural advice through an advanced chatbot interface.
 
